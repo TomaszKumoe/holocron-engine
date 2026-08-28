@@ -1,10 +1,13 @@
 {
-  "rewrites": [
-    { "source": "/", "destination": "/projekty.html" },
-    { "source": "/global", "destination": "/index.html" },
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/projekty", "destination": "/projekty.html" },
-    { "source": "/projekt", "destination": "/projekt.html" },
-    { "source": "/plan", "destination": "/plan.html" }
+  "trailingSlash": false,
+  "routes": [
+    { "src": "/static/(.*)", "dest": "/$1" },
+    { "src": "/global", "dest": "/index.html" },
+    { "src": "/login", "dest": "/login.html" },
+    { "src": "/projekty", "dest": "/projekty.html" },
+    { "src": "/projekt", "dest": "/projekt.html" },
+    { "src": "/plan", "dest": "/plan.html" },
+    { "src": "/", "dest": "/projekty.html" },
+    { "handle": "filesystem" }
   ]
 }
