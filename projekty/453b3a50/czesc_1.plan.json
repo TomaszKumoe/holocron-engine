@@ -1,0 +1,115 @@
+{
+  "bryly": [
+    {
+      "typ": "cylinder",
+      "dlugosc": null,
+      "szerokosc": null,
+      "promien": 35.0,
+      "wysokosc": 30.0,
+      "x": 80.0,
+      "y": 90.0,
+      "z": 0.0,
+      "kolor": "#1a1a1a"
+    },
+    {
+      "typ": "cylinder",
+      "dlugosc": null,
+      "szerokosc": null,
+      "promien": 35.0,
+      "wysokosc": 30.0,
+      "x": -80.0,
+      "y": 90.0,
+      "z": 0.0,
+      "kolor": "#1a1a1a"
+    },
+    {
+      "typ": "cylinder",
+      "dlugosc": null,
+      "szerokosc": null,
+      "promien": 35.0,
+      "wysokosc": 30.0,
+      "x": 80.0,
+      "y": -90.0,
+      "z": 0.0,
+      "kolor": "#1a1a1a"
+    },
+    {
+      "typ": "cylinder",
+      "dlugosc": null,
+      "szerokosc": null,
+      "promien": 35.0,
+      "wysokosc": 30.0,
+      "x": -80.0,
+      "y": -90.0,
+      "z": 0.0,
+      "kolor": "#1a1a1a"
+    },
+    {
+      "typ": "box",
+      "dlugosc": 220.0,
+      "szerokosc": 160.0,
+      "promien": null,
+      "wysokosc": 6.0,
+      "x": 0.0,
+      "y": 0.0,
+      "z": 30.0,
+      "kolor": "#3a4048"
+    },
+    {
+      "typ": "box",
+      "dlugosc": 120.0,
+      "szerokosc": 90.0,
+      "promien": null,
+      "wysokosc": 40.0,
+      "x": -10.0,
+      "y": 0.0,
+      "z": 36.0,
+      "kolor": "#2b2f36"
+    },
+    {
+      "typ": "box",
+      "dlugosc": 20.0,
+      "szerokosc": 110.0,
+      "promien": null,
+      "wysokosc": 14.0,
+      "x": 95.0,
+      "y": 0.0,
+      "z": 36.0,
+      "kolor": "#c0392b"
+    },
+    {
+      "typ": "cylinder",
+      "dlugosc": null,
+      "szerokosc": null,
+      "promien": 20.0,
+      "wysokosc": 18.0,
+      "x": -10.0,
+      "y": 0.0,
+      "z": 76.0,
+      "kolor": "#c0392b"
+    }
+  ],
+  "otwory": [
+    {
+      "x": 95.0,
+      "y": 65.0,
+      "srednica": 4.0
+    },
+    {
+      "x": 95.0,
+      "y": -65.0,
+      "srednica": 4.0
+    },
+    {
+      "x": -95.0,
+      "y": 65.0,
+      "srednica": 4.0
+    },
+    {
+      "x": -95.0,
+      "y": -65.0,
+      "srednica": 4.0
+    }
+  ],
+  "fillet_promien": 8.0
+}

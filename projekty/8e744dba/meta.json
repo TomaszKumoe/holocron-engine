@@ -1,0 +1,12 @@
+{
+  "nazwa": "robot3",
+  "utworzono": "2026-08-28T20:11:44.504833+00:00",
+  "wlasciciel": "8eeefd9a-1b05-4339-b4a6-c66676a89cb3",
+  "polozenia": {
+    "czesc_1": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  }
+}
