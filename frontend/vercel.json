@@ -7,7 +7,7 @@
     { "src": "/projekty", "dest": "/projekty.html" },
     { "src": "/projekt", "dest": "/projekt.html" },
     { "src": "/plan", "dest": "/plan.html" },
-    { "src": "/", "dest": "/projekty.html" },
+    { "src": "/", "dest": "/login.html" },
     { "handle": "filesystem" }
   ]
 }
