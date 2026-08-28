@@ -15,7 +15,7 @@ import json
 import pathlib
 import sys
 
-KATALOG_ROBOT = pathlib.Path(r"c:\Users\tomas\holocron-vision\robot")
+KATALOG_ROBOT = pathlib.Path(__file__).parent / "robot_czesci"
 sys.path.insert(0, str(KATALOG_ROBOT))
 import dostawca  # noqa: E402
 import ramie  # noqa: E402

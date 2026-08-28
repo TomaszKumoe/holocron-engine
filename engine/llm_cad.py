@@ -14,6 +14,7 @@ Klucz czytany na zywo z holocron-vision/.env, nie kopiowany do tego repo.
 
 import base64
 import json
+import os
 import pathlib
 import re
 import tempfile
@@ -156,6 +157,9 @@ Odpowiedz WYLACZNIE jednym obiektem JSON:
 
 
 def _wczytaj_klucz() -> str:
+    klucz = os.environ.get("OPENROUTER_API_KEY", "")
+    if klucz:
+        return klucz
     if not ENV_HOLOCRON_VISION.exists():
         return ""
     for linia in ENV_HOLOCRON_VISION.read_text(encoding="utf-8").splitlines():

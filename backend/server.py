@@ -20,6 +20,7 @@ import cadquery as cq
 import httpx
 from dotenv import load_dotenv
 from fastapi import Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
@@ -56,6 +57,16 @@ PROJEKTY_DIR.mkdir(exist_ok=True)
 HISTORIE_PROJEKTOW: dict[str, list[dict]] = {}
 
 app = FastAPI()
+
+# Frontend na Vercel woła /api/* przez rewrite (ten sam origin z perspektywy
+# przegladarki), ale CORS zostaje jako siatka bezpieczenstwa - np. do
+# recznego testowania backendu spod innego originu.
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["https://holocron-engine.com", "http://localhost:8300", "http://127.0.0.1:8300"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Pamiec rozmowy z LLM (llm_cad.py) - jedna, dzielona sesja (narzedzie
 # lokalne, jednoosobowe). Bez tego kazde zapytanie do modelu jest "pierwsze",
@@ -533,4 +544,5 @@ def api_chat_projektu(pid: str, wiad: WiadomoscCzatu, uzytkownik: dict = Depends
 if __name__ == "__main__":
     import uvicorn
 
-    uvicorn.run(app, host="127.0.0.1", port=8300)
+    port = int(os.environ.get("PORT", 8300))
+    uvicorn.run(app, host="0.0.0.0", port=port)
