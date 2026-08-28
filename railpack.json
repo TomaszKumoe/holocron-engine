@@ -1,0 +1,6 @@
+{
+  "buildAptPackages": ["libgl1", "libglu1-mesa", "libxrender1", "libxi6", "libsm6", "libxext6"],
+  "deploy": {
+    "aptPackages": ["libgl1", "libglu1-mesa", "libxrender1", "libxi6", "libsm6", "libxext6"]
+  }
+}
