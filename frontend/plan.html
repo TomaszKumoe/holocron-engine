@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Holocron Engine — Plan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/assets/shell.css">
+<style>
+  :root {
+    --font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --bg: #0b0e12; --panel: #16191e; --panel2: #1d2126; --border: #2e333a;
+    --border2: #3a4048; --text: #eef0f3; --text-dim: #8b939d; --text-mid: #cbd0d7;
+    --btn-hover: #212630; --btn-active: #333941; --accent: #34a1e8;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --panel: #ffffff; --panel2: #fbfcfd; --border: #e3e6ea;
+    --border2: #d7dbe1; --text: #16191f; --text-dim: #6e7681; --text-mid: #3b414b;
+    --btn-hover: #eceef1; --btn-active: #d8dce1; --accent: #0b7ec4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  #main { flex: 1; overflow-y: auto; }
+  #wrap { max-width: 720px; margin: 0 auto; padding: 56px 24px 80px; text-align: center; }
+  h1 { font-size: 28px; font-weight: 700; letter-spacing: -0.028em; margin: 0 0 8px; }
+  #subtitle { color: var(--text-dim); font-size: 15px; margin: 0 0 40px; }
+
+  #plany { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; text-align: left; }
+  .karta-plan { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; position: relative; }
+  .karta-plan.wyrozniona { border-color: var(--accent); }
+  .plan-badge { position: absolute; top: -11px; right: 20px; background: var(--accent); color: #fff; font: 600 11.5px var(--font); padding: 3px 10px; border-radius: 20px; }
+  .plan-nazwa { font-size: 15px; font-weight: 600; color: var(--text-mid); text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 12px; }
+  .plan-cena { display: flex; align-items: baseline; gap: 6px; margin-bottom: 18px; }
+  .plan-cena .kwota { font-size: 34px; font-weight: 700; letter-spacing: -0.02em; }
+  .plan-cena .okres { font-size: 14px; color: var(--text-dim); }
+  .plan-cechy { list-style: none; margin: 0 0 22px; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+  .plan-cechy li { font-size: 14px; color: var(--text-mid); padding-left: 22px; position: relative; }
+  .plan-cechy li::before { content: "✓"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+  .plan-cta { width: 100%; background: var(--panel2); border: 1px solid var(--border2); color: var(--text); border-radius: 8px; padding: 12px 0; cursor: pointer; font: 600 14.5px var(--font); }
+  .karta-plan.wyrozniona .plan-cta { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .plan-cta:hover { opacity: 0.9; }
+
+  #komunikat { margin-top: 24px; color: var(--text-dim); font-size: 13.5px; min-height: 1.4em; }
+</style>
+<script>
+  // Motyw musi dzialac niezaleznie od modulow (auth.js, three.js) - gdy modul
+  // sie nie wczyta, przelacznik i tak dziala. Inline w <head> = brak mignieca.
+  (function () {
+    var zapisany = localStorage.getItem("holocron-engine-theme") || "dark";
+    document.documentElement.setAttribute("data-theme", zapisany);
+    window.__setTheme = function (theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("holocron-engine-theme", theme);
+      window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
+    };
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest && e.target.closest("#theme-toggle");
+      if (!btn) return;
+      var current = document.documentElement.getAttribute("data-theme") || "dark";
+      window.__setTheme(current === "dark" ? "light" : "dark");
+    });
+  })();
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <button id="leftnav-toggle" class="icon-btn" title="Menu">☰</button>
+    <div id="topbar-title">Holocron Engine</div>
+    <div id="topbar-right">
+      <span id="user-email" style="font-size:12px; color:var(--text-dim);"></span>
+      <button id="settings-btn" class="icon-btn" data-i18n-title="settings" title="Ustawienia">⚙ <span data-i18n="settings">Ustawienia</span></button>
+      <div id="settings-menu">
+        <button id="lang-toggle" data-i18n="lang_toggle">🌐 język: polski</button>
+        <button id="theme-toggle" data-i18n="theme_toggle">☀︎/☾ przełącz motyw</button>
+        <button id="wyloguj-btn" data-i18n="logout">Wyloguj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="body-row">
+    <div id="leftnav">
+      <a class="leftnav-item" data-key="projekty" href="/projekty">
+        <span class="leftnav-icon">🗂️</span><span class="leftnav-label" data-i18n="nav_projects">Moje projekty</span>
+      </a>
+      <button class="leftnav-item disabled" data-key="czaty" data-i18n-title="nav_open_project_for_chat" title="Otwórz projekt, aby zobaczyć czat" disabled>
+        <span class="leftnav-icon">💬</span><span class="leftnav-label" data-i18n="nav_chats">Czaty</span>
+      </button>
+      <a class="leftnav-item" data-key="plan" href="/plan">
+        <span class="leftnav-icon">💳</span><span class="leftnav-label" data-i18n="nav_plan">Plan</span>
+      </a>
+    </div>
+
+    <div id="main">
+      <div id="wrap">
+        <h1 data-i18n="plan_title">Plan</h1>
+        <p id="subtitle" data-i18n="plan_subtitle">Wybierz sposób rozliczania.</p>
+
+        <div id="plany">
+          <div class="karta-plan">
+            <div class="plan-nazwa" data-i18n="plan_monthly_name">Miesięczny</div>
+            <div class="plan-cena">
+              <span class="kwota" data-i18n="plan_monthly_price">99 zł</span>
+              <span class="okres" data-i18n="plan_monthly_period">/ miesiąc</span>
+            </div>
+            <ul class="plan-cechy">
+              <li data-i18n="plan_feature_1">Nielimitowana liczba projektów</li>
+              <li data-i18n="plan_feature_2">Generowanie części przez czat AI</li>
+              <li data-i18n="plan_feature_3">Eksport STL / STEP</li>
+            </ul>
+            <button class="plan-cta" data-plan="miesieczny" data-i18n="plan_cta">Wybierz</button>
+          </div>
+
+          <div class="karta-plan wyrozniona">
+            <div class="plan-badge" data-i18n="plan_yearly_badge">2 miesiące gratis</div>
+            <div class="plan-nazwa" data-i18n="plan_yearly_name">Roczny</div>
+            <div class="plan-cena">
+              <span class="kwota" data-i18n="plan_yearly_price">990 zł</span>
+              <span class="okres" data-i18n="plan_yearly_period">/ rok</span>
+            </div>
+            <ul class="plan-cechy">
+              <li data-i18n="plan_feature_1">Nielimitowana liczba projektów</li>
+              <li data-i18n="plan_feature_2">Generowanie części przez czat AI</li>
+              <li data-i18n="plan_feature_3">Eksport STL / STEP</li>
+            </ul>
+            <button class="plan-cta" data-plan="roczny" data-i18n="plan_cta">Wybierz</button>
+          </div>
+        </div>
+
+        <div id="komunikat"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { wymagajLogowania } from "/static/assets/auth.js";
+import { initShell } from "/static/assets/shell.js";
+import { t } from "/static/assets/i18n.js";
+
+const sesja = await wymagajLogowania();
+if (!sesja) throw new Error("brak sesji"); // wymagajLogowania juz przekierowal na /login
+
+document.getElementById("user-email").textContent = sesja.user.email ?? "";
+initShell("plan");
+
+const komunikatEl = document.getElementById("komunikat");
+document.querySelectorAll(".plan-cta").forEach((btn) => {
+  btn.onclick = () => { komunikatEl.textContent = t("plan_soon"); };
+});
+</script>
+</body>
+</html>

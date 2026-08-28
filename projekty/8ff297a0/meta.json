@@ -1,0 +1,17 @@
+{
+  "nazwa": "Test dron",
+  "utworzono": "2026-08-27T19:46:18.925202+00:00",
+  "wlasciciel": "8eeefd9a-1b05-4339-b4a6-c66676a89cb3",
+  "polozenia": {
+    "czesc_1": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "czesc_2": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    }
+  }
+}

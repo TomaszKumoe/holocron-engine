@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Holocron Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/assets/shell.css">
+<style>
+  :root {
+    --font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --bg: #0b0e12; --panel: #16191e; --panel2: #1d2126; --border: #2e333a;
+    --border2: #3a4048; --text: #eef0f3; --text-dim: #8b939d; --text-mid: #cbd0d7;
+    --btn-hover: #212630; --btn-active: #333941; --accent: #34a1e8;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --panel: #ffffff; --panel2: #fbfcfd; --border: #e3e6ea;
+    --border2: #d7dbe1; --text: #16191f; --text-dim: #6e7681; --text-mid: #3b414b;
+    --btn-hover: #eceef1; --btn-active: #d8dce1; --accent: #0b7ec4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  #link-robot { font: 500 13px var(--font); text-decoration: none; color: var(--text-mid); border: 1px solid var(--border2); border-radius: 6px; padding: 6px 10px; }
+  #link-robot:hover { background: var(--btn-hover); color: var(--text); }
+
+  #main { flex: 1; overflow-y: auto; }
+  #wrap { max-width: 900px; margin: 0 auto; padding: 40px 24px 80px; }
+  h1 { font-size: 26px; font-weight: 700; letter-spacing: -0.028em; margin: 0 0 28px; }
+
+  #nowy-row { display: flex; gap: 8px; margin-bottom: 36px; }
+  #nowy-input { flex: 1; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 14px 16px; font: 400 15.5px var(--font); }
+  #nowy-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  #nowy-btn { background: var(--accent); border: none; color: #ffffff; border-radius: 8px; padding: 14px 22px; cursor: pointer; font: 600 15px var(--font); white-space: nowrap; }
+  #nowy-btn:hover { opacity: 0.9; }
+
+  #lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; }
+  .karta { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px; cursor: pointer; text-decoration: none; color: inherit; display: block; position: relative; transition: border-color .12s; }
+  .karta:hover { border-color: var(--accent); background: var(--panel2); }
+  .karta-nazwa { font-size: 17px; font-weight: 600; letter-spacing: -0.015em; margin-bottom: 7px; }
+  .karta-info { font: 400 12.5px var(--mono); color: var(--text-dim); }
+  .karta-akcje { position: absolute; top: 10px; right: 10px; display: flex; gap: 2px; }
+  .karta-usun, .karta-zmien { background: transparent; border: none; color: var(--text-dim); cursor: pointer; font-size: 14px; padding: 4px 6px; border-radius: 5px; }
+  .karta-usun:hover, .karta-zmien:hover { background: var(--btn-hover); color: var(--text); }
+  .karta-nazwa-input { font: 600 17px var(--font); letter-spacing: -0.015em; background: var(--panel2); border: 1px solid var(--accent); border-radius: 5px; color: var(--text); padding: 3px 6px; width: calc(100% - 60px); margin-bottom: 7px; }
+  .karta-nazwa-input:focus { outline: none; }
+
+  #pusto { color: var(--text-dim); font-size: 14.5px; padding: 22px 0; }
+  a { color: var(--accent); }
+  a:hover { color: var(--text); }
+</style>
+<script>
+  // Motyw musi dzialac niezaleznie od modulow (auth.js, three.js) - gdy modul
+  // sie nie wczyta, przelacznik i tak dziala. Inline w <head> = brak mignieca.
+  (function () {
+    var zapisany = localStorage.getItem("holocron-engine-theme") || "dark";
+    document.documentElement.setAttribute("data-theme", zapisany);
+    window.__setTheme = function (theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("holocron-engine-theme", theme);
+      window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
+    };
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest && e.target.closest("#theme-toggle");
+      if (!btn) return;
+      var current = document.documentElement.getAttribute("data-theme") || "dark";
+      window.__setTheme(current === "dark" ? "light" : "dark");
+    });
+  })();
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <button id="leftnav-toggle" class="icon-btn" title="Menu">☰</button>
+    <div id="topbar-title">Holocron Engine</div>
+    <div id="topbar-right">
+      <a id="link-robot" href="/global" data-i18n="base_robot_link">Robot bazowy</a>
+      <span id="user-email" style="font-size:12px; color:var(--text-dim);"></span>
+      <button id="settings-btn" class="icon-btn" data-i18n-title="settings" title="Ustawienia">⚙ <span data-i18n="settings">Ustawienia</span></button>
+      <div id="settings-menu">
+        <button id="lang-toggle" data-i18n="lang_toggle">🌐 język: polski</button>
+        <button id="theme-toggle" data-i18n="theme_toggle">☀︎/☾ przełącz motyw</button>
+        <button id="wyloguj-btn" data-i18n="logout">Wyloguj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="body-row">
+    <div id="leftnav">
+      <a class="leftnav-item" data-key="projekty" href="/projekty">
+        <span class="leftnav-icon">🗂️</span><span class="leftnav-label" data-i18n="nav_projects">Moje projekty</span>
+      </a>
+      <button class="leftnav-item disabled" data-key="czaty" data-i18n-title="nav_open_project_for_chat" title="Otwórz projekt, aby zobaczyć czat" disabled>
+        <span class="leftnav-icon">💬</span><span class="leftnav-label" data-i18n="nav_chats">Czaty</span>
+      </button>
+      <a class="leftnav-item" data-key="plan" href="/plan">
+        <span class="leftnav-icon">💳</span><span class="leftnav-label" data-i18n="nav_plan">Plan</span>
+      </a>
+    </div>
+
+    <div id="main">
+      <div id="wrap">
+        <h1 data-i18n="projects_heading">Moje projekty</h1>
+
+        <div id="nowy-row">
+          <input id="nowy-input" data-i18n-ph="new_project_placeholder" placeholder="nazwa nowego projektu (np. dron wyścigowy)" autocomplete="off">
+          <button id="nowy-btn" data-i18n="new_project_btn">+ Nowy projekt</button>
+        </div>
+
+        <div id="lista"></div>
+        <div id="pusto" style="display:none" data-i18n="empty_state">Brak projektów — utwórz pierwszy powyżej.</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+import { wymagajLogowania, authFetch } from "/static/assets/auth.js";
+import { initShell } from "/static/assets/shell.js";
+import { t } from "/static/assets/i18n.js";
+
+const sesja = await wymagajLogowania();
+if (!sesja) throw new Error("brak sesji"); // wymagajLogowania juz przekierowal na /login
+
+document.getElementById("user-email").textContent = sesja.user.email ?? "";
+initShell("projekty");
+
+const listaEl = document.getElementById("lista");
+const pustoEl = document.getElementById("pusto");
+
+function formatData(iso) {
+  if (!iso) return "";
+  const d = new Date(iso);
+  const locale = document.documentElement.getAttribute("data-lang") === "en" ? "en-GB" : "pl-PL";
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short", year: "numeric" });
+}
+
+function formatCzesci(n) {
+  const lang = document.documentElement.getAttribute("data-lang");
+  if (lang === "en") return `${n} part${n === 1 ? "" : "s"}`;
+  return `${n} część(ci)`;
+}
+
+let ostatnieProjekty = [];
+
+async function odswiez() {
+  ostatnieProjekty = await authFetch("/api/projekty").then(r => r.json());
+  renderuj();
+}
+
+function renderuj() {
+  const projekty = ostatnieProjekty;
+  listaEl.innerHTML = "";
+  pustoEl.style.display = projekty.length === 0 ? "block" : "none";
+  for (const p of projekty) {
+    const a = document.createElement("a");
+    a.className = "karta";
+    a.href = `/projekt?id=${p.id}`;
+    a.innerHTML = `
+      <div class="karta-akcje">
+        <button class="karta-zmien" data-i18n-title="rename_title" title="${t("rename_title")}" data-id="${p.id}">✎</button>
+        <button class="karta-usun" data-i18n-title="delete_title" title="${t("delete_title")}" data-id="${p.id}">✕</button>
+      </div>
+      <div class="karta-nazwa" data-id="${p.id}">${p.nazwa}</div>
+      <div class="karta-info">${formatCzesci(p.liczba_czesci)} · ${formatData(p.utworzono)}</div>
+    `;
+    listaEl.appendChild(a);
+  }
+  listaEl.querySelectorAll(".karta-usun").forEach((btn) => {
+    btn.onclick = async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      if (!confirm(t("delete_confirm"))) return;
+      await authFetch(`/api/projekty/${btn.dataset.id}`, { method: "DELETE" });
+      odswiez();
+    };
+  });
+  listaEl.querySelectorAll(".karta-zmien").forEach((btn) => {
+    btn.onclick = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const nazwaEl = listaEl.querySelector(`.karta-nazwa[data-id="${btn.dataset.id}"]`);
+      const stara = nazwaEl.textContent;
+      const input = document.createElement("input");
+      input.className = "karta-nazwa-input";
+      input.value = stara;
+      nazwaEl.replaceWith(input);
+      input.focus();
+      input.select();
+
+      const zapisz = async () => {
+        const nowa = input.value.trim();
+        if (nowa && nowa !== stara) {
+          await authFetch(`/api/projekty/${btn.dataset.id}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ nazwa: nowa }),
+          });
+        }
+        odswiez();
+      };
+      input.addEventListener("keydown", (ev) => {
+        ev.stopPropagation();
+        if (ev.key === "Enter") input.blur();
+        if (ev.key === "Escape") { input.removeEventListener("blur", zapisz); odswiez(); }
+      });
+      input.addEventListener("click", (ev) => ev.stopPropagation());
+      input.addEventListener("blur", zapisz);
+    };
+  });
+}
+
+window.addEventListener("langchange", renderuj);
+
+async function nowyProjekt() {
+  const nazwa = document.getElementById("nowy-input").value.trim();
+  const r = await authFetch("/api/projekty", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nazwa }),
+  });
+  const dane = await r.json();
+  window.location.href = `/projekt?id=${dane.id}`;
+}
+
+document.getElementById("nowy-btn").onclick = nowyProjekt;
+document.getElementById("nowy-input").addEventListener("keydown", (e) => { if (e.key === "Enter") nowyProjekt(); });
+
+odswiez();
+</script>
+</body>
+</html>

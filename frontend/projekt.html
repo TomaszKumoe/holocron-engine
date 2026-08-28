@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Holocron Engine</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/static/assets/shell.css">
+<style>
+  :root {
+    --font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --bg: #0b0e12; --bg-gora: #262a31; --bg-dol: #0c0f14; --panel: #16191e; --panel2: #1d2126; --border: #2e333a;
+    --border2: #3a4048; --text: #eef0f3; --text-dim: #8b939d; --text-mid: #cbd0d7;
+    --bubble-user: #10222e; --btn-hover: #212630; --btn-active: #333941;
+    --grid1: #3a414c; --grid2: #1a1e24; --mesh: #a8b0bd; --mesh-sel: #34a1e8;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --bg-gora: #ffffff; --bg-dol: #d9dee6; --panel: #ffffff; --panel2: #fbfcfd; --border: #e3e6ea;
+    --border2: #d7dbe1; --text: #16191f; --text-dim: #6e7681; --text-mid: #3b414b;
+    --bubble-user: #eaf4fb; --btn-hover: #eceef1; --btn-active: #d8dce1;
+    --grid1: #c3cad4; --grid2: #e6eaef; --mesh: #8a93a1; --mesh-sel: #0b7ec4;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1; }
+  #app { display: flex; flex-direction: column; height: 100vh; }
+
+  #topbar { flex-shrink: 0; height: 52px; display: flex; align-items: center; gap: 8px; padding: 0 14px; border-bottom: 1px solid var(--border); background: var(--panel); }
+  #powrot { color: var(--text-mid); text-decoration: none; font-size: 13.5px; font-weight: 500; padding: 6px 10px; border-radius: 6px; }
+  #powrot:hover { background: var(--btn-hover); color: var(--text); }
+  #topbar-title { font-weight: 700; font-size: 16px; letter-spacing: -0.01em; white-space: nowrap; cursor: text; border-radius: 5px; padding: 4px 6px; }
+  #topbar-title:hover { background: var(--btn-hover); }
+  #topbar-title-input { font: 700 16px var(--font); letter-spacing: -0.01em; background: var(--panel2); border: 1px solid var(--accent); border-radius: 5px; color: var(--text); padding: 3px 6px; width: 220px; }
+  #topbar-title-input:focus { outline: none; }
+  .icon-btn { background: transparent; border: 1px solid transparent; color: var(--text-mid); border-radius: 6px; padding: 7px 11px; font: 500 13.5px var(--font); cursor: pointer; display: flex; align-items: center; gap: 6px; }
+  .icon-btn:hover { background: var(--btn-hover); color: var(--text); }
+  .icon-btn.active { background: var(--btn-active); color: var(--text); border-color: var(--border2); }
+  #topbar-right { margin-left: auto; position: relative; display: flex; align-items: center; }
+  #settings-menu { position: absolute; top: calc(100% + 8px); right: 0; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; padding: 8px; display: none; flex-direction: column; gap: 6px; min-width: 170px; box-shadow: 0 8px 24px rgba(0,0,0,.25); z-index: 10; }
+  #settings-menu.open { display: flex; }
+  #theme-toggle { background: var(--panel); border: 1px solid var(--border2); color: var(--text); border-radius: 6px; padding: 8px 11px; cursor: pointer; font: 500 13px var(--font); text-align: left; }
+  #theme-toggle:hover { background: var(--btn-hover); }
+
+  #body-row { flex: 1; display: flex; min-height: 0; }
+  #sidebar-right { width: 320px; flex-shrink: 0; display: flex; flex-direction: column; background: var(--panel); overflow: hidden; transition: width .16s ease; }
+  #sidebar-right.collapsed { width: 0; }
+  #sidebar-right-toggle { flex-shrink: 0; align-self: stretch; width: 16px; background: var(--panel2); border: none; border-left: 1px solid var(--border); border-right: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-size: 11px; }
+  #sidebar-right-toggle:hover { background: var(--btn-hover); color: var(--text); }
+
+  .sidebar-panel { display: flex; flex-direction: column; height: 100%; min-width: 320px; overflow-y: auto; }
+
+  #panel-czat { min-width: 320px; }
+  #messages { flex: 1; overflow-y: auto; padding: 12px 16px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { font-size: 14.5px; line-height: 1.55; padding: 8px 10px; border-radius: 8px; max-width: 92%; white-space: pre-wrap; }
+  .msg.user { align-self: flex-end; background: var(--bubble-user); }
+  .msg.bot { align-self: flex-start; background: var(--panel2); border: 1px solid var(--border); color: var(--text-mid); }
+  .msg.ladowanie { display: flex; align-items: center; gap: 5px; }
+  .kropka { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); animation: pulsuj 1.1s infinite ease-in-out; }
+  .kropka:nth-child(2) { animation-delay: .15s; }
+  .kropka:nth-child(3) { animation-delay: .3s; }
+  @keyframes pulsuj { 0%, 60%, 100% { opacity: .25; transform: scale(.85); } 30% { opacity: 1; transform: scale(1); } }
+  #chat-input-row { display: flex; padding: 10px; border-top: 1px solid var(--border); gap: 8px; }
+  #chat-input { flex: 1; background: var(--panel2); border: 1px solid var(--border2); border-radius: 6px; color: var(--text); padding: 10px 12px; font: 400 14.5px var(--font); }
+  #chat-input:focus { outline: none; border-color: #34a1e8; box-shadow: 0 0 0 3px color-mix(in srgb, #34a1e8 18%, transparent); }
+  #send-btn { background: var(--panel2); border: 1px solid var(--border2); color: var(--text); border-radius: 6px; padding: 10px 16px; cursor: pointer; font: 600 14px var(--font); }
+  #send-btn:hover { background: var(--btn-hover); }
+
+  #viewer-wrap { flex: 1; position: relative; min-width: 0; }
+  #viewer { width: 100%; height: 100%; display: block; }
+
+  #panel-tl { position: absolute; top: 12px; left: 12px; background: color-mix(in srgb, var(--panel) 88%, transparent); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; font-size: 14.5px; max-width: 280px; }
+  #panel-tl .tytul { font: 600 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin-bottom: 7px; }
+  #wybrana { font-size: 14.5px; }
+  #wybrana .nazwa { font-family: var(--mono); font-weight: 600; letter-spacing: -0.01em; }
+  #tryb-row { display: flex; gap: 6px; margin-top: 8px; }
+  .tryb-btn { flex: 1; background: var(--panel2); border: 1px solid var(--border2); color: var(--text-mid); font: 600 13px var(--font); padding: 7px 0; border-radius: 5px; cursor: pointer; }
+  .tryb-btn:hover { background: var(--btn-hover); }
+  .tryb-btn.active { background: var(--mesh-sel); border-color: var(--mesh-sel); color: #fff; }
+  #kolor-row { display: none; align-items: center; gap: 8px; margin-top: 10px; padding-top: 10px; border-top: 1px solid var(--border); }
+  #kolor-row label { font-size: 13px; color: var(--text-mid); }
+  #kolor-input { width: 30px; height: 26px; padding: 0; border: 1px solid var(--border2); border-radius: 5px; background: none; cursor: pointer; }
+  #hint { position: absolute; bottom: 12px; left: 12px; font: 400 12.5px var(--mono); color: var(--text-dim); background: color-mix(in srgb, var(--panel) 80%, transparent); padding: 5px 9px; border-radius: 6px; max-width: 340px; }
+  #pusty-stan { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; color: var(--text-dim); font-size: 15px; line-height: 1.6; max-width: 340px; }
+</style>
+<script>
+  // Motyw musi dzialac niezaleznie od modulow (auth.js, three.js) - gdy modul
+  // sie nie wczyta, przelacznik i tak dziala. Inline w <head> = brak mignieca.
+  (function () {
+    var zapisany = localStorage.getItem("holocron-engine-theme") || "dark";
+    document.documentElement.setAttribute("data-theme", zapisany);
+    window.__setTheme = function (theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("holocron-engine-theme", theme);
+      window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
+    };
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest && e.target.closest("#theme-toggle");
+      if (!btn) return;
+      var current = document.documentElement.getAttribute("data-theme") || "dark";
+      window.__setTheme(current === "dark" ? "light" : "dark");
+    });
+  })();
+</script>
+</head>
+<body>
+<div id="app">
+  <div id="topbar">
+    <button id="leftnav-toggle" class="icon-btn" title="Menu">☰</button>
+    <a id="powrot" href="/projekty" data-i18n="back_to_projects">← Projekty</a>
+    <div id="topbar-title" data-i18n-title="rename_tooltip" title="Kliknij, aby zmienić nazwę">...</div>
+    <div id="topbar-right">
+      <span id="user-email" style="font-size:12px; color:var(--text-dim); margin-right:8px;"></span>
+      <button id="settings-btn" class="icon-btn" data-i18n-title="settings" title="Ustawienia">⚙ <span data-i18n="settings">Ustawienia</span></button>
+      <div id="settings-menu">
+        <button id="lang-toggle" data-i18n="lang_toggle">🌐 język: polski</button>
+        <button id="theme-toggle" data-i18n="theme_toggle">☀︎/☾ przełącz motyw</button>
+        <button id="wyloguj-btn" data-i18n="logout">Wyloguj</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="body-row">
+    <div id="leftnav">
+      <a class="leftnav-item" data-key="projekty" href="/projekty">
+        <span class="leftnav-icon">🗂️</span><span class="leftnav-label" data-i18n="nav_projects">Moje projekty</span>
+      </a>
+      <button class="leftnav-item" id="leftnav-czaty" data-key="czaty">
+        <span class="leftnav-icon">💬</span><span class="leftnav-label" data-i18n="nav_chats">Czaty</span>
+      </button>
+      <a class="leftnav-item" data-key="plan" href="/plan">
+        <span class="leftnav-icon">💳</span><span class="leftnav-label" data-i18n="nav_plan">Plan</span>
+      </a>
+    </div>
+
+    <div id="viewer-wrap">
+      <div id="panel-tl">
+        <div class="tytul" data-i18n="selected_part_title">Zaznaczona część</div>
+        <div id="wybrana"><span class="nazwa" data-i18n="no_selection">-- kliknij część w widoku --</span></div>
+        <div id="tryb-row">
+          <button class="tryb-btn active" data-tryb="translate" data-i18n="mode_translate">przesuń</button>
+          <button class="tryb-btn" data-tryb="rotate" data-i18n="mode_rotate">obróć</button>
+        </div>
+        <div id="kolor-row">
+          <label for="kolor-input" data-i18n="part_color">Kolor bryły</label>
+          <input type="color" id="kolor-input">
+        </div>
+      </div>
+      <div id="hint" data-i18n="hint">klik na część: zaznacz i manipuluj gizmo · puste miejsce: obrót/przesuw kamery (LPM/PPM) · scroll: zoom</div>
+      <div id="pusty-stan" data-i18n="empty_project_state">Ten projekt jest jeszcze pusty.<br>Opisz w czacie po prawej co chcesz zaprojektować.</div>
+      <div id="viewer"></div>
+    </div>
+
+    <button id="sidebar-right-toggle" title="Zwiń/rozwiń czat">›</button>
+    <div id="sidebar-right">
+      <div id="panel-czat" class="sidebar-panel">
+        <div id="messages"></div>
+        <div id="chat-input-row">
+          <input id="chat-input" data-i18n-ph="chat_placeholder" placeholder="np. koła do robota" autocomplete="off">
+          <button id="send-btn" data-i18n="send">Wyślij</button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script type="importmap">
+{ "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/" } }
+</script>
+<script type="module">
+import * as THREE from "three";
+import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+import { TransformControls } from "three/addons/controls/TransformControls.js";
+import { STLLoader } from "three/addons/loaders/STLLoader.js";
+import { RoomEnvironment } from "three/addons/environments/RoomEnvironment.js";
+import { wymagajLogowania, authFetch } from "/static/assets/auth.js";
+import { initShell } from "/static/assets/shell.js";
+import { t } from "/static/assets/i18n.js";
+
+const sesja = await wymagajLogowania();
+if (!sesja) throw new Error("brak sesji"); // wymagajLogowania juz przekierowal na /login
+document.getElementById("user-email").textContent = sesja.user.email ?? "";
+
+const PID = new URLSearchParams(window.location.search).get("id");
+if (!PID) window.location.href = "/projekty";
+
+function cssColor(varName) {
+  return new THREE.Color(getComputedStyle(document.documentElement).getPropertyValue(varName).trim());
+}
+
+function gradientTlo(gora, dol) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2; canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const grad = ctx.createLinearGradient(0, 0, 0, 256);
+  grad.addColorStop(0, gora);
+  grad.addColorStop(1, dol);
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, 2, 256);
+  const tex = new THREE.CanvasTexture(canvas);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
+}
+
+// ── szkielet (lewe menu, Ustawienia w prawym gornym rogu) - patrz shell.js.
+// Klikniecie "Czaty" w lewym menu ma sens tylko w kontekscie otwartego
+// projektu (czat projektu siedzi juz w prawym panelu) - wiec tutaj po
+// prostu otwiera/podswietla prawy panel czatu zamiast byc wyszarzone jak
+// na liscie projektow.
+initShell("czaty");
+document.getElementById("leftnav-czaty").onclick = () => {
+  ustawSidebarRight(true);
+  document.getElementById("chat-input").focus();
+};
+document.getElementById("leftnav").addEventListener("transitionend", resize);
+
+// ── prawy panel czatu ──
+const sidebarRightEl = document.getElementById("sidebar-right");
+const sidebarRightToggleBtn = document.getElementById("sidebar-right-toggle");
+let sidebarRightOtwarty = true;
+
+function ustawSidebarRight(otwarty) {
+  sidebarRightOtwarty = otwarty;
+  sidebarRightEl.classList.toggle("collapsed", !otwarty);
+  sidebarRightToggleBtn.textContent = otwarty ? "›" : "‹";
+}
+sidebarRightToggleBtn.onclick = () => ustawSidebarRight(!sidebarRightOtwarty);
+
+const topbarTitleEl = document.getElementById("topbar-title");
+
+function ustawTytul(nazwa) {
+  topbarTitleEl.textContent = nazwa;
+  document.title = `Holocron Engine — ${nazwa}`;
+}
+
+authFetch("/api/projekty").then(r => r.json()).then((projekty) => {
+  const ten = projekty.find(p => p.id === PID);
+  ustawTytul(ten ? ten.nazwa : PID);
+});
+
+topbarTitleEl.onclick = () => {
+  const stara = topbarTitleEl.textContent;
+  const input = document.createElement("input");
+  input.id = "topbar-title-input";
+  input.value = stara;
+  topbarTitleEl.replaceWith(input);
+  input.focus();
+  input.select();
+
+  const zapisz = async () => {
+    const nowa = input.value.trim();
+    input.replaceWith(topbarTitleEl);
+    if (nowa && nowa !== stara) {
+      const r = await authFetch(`/api/projekty/${PID}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ nazwa: nowa }),
+      });
+      const dane = await r.json();
+      ustawTytul(dane.nazwa);
+    } else {
+      ustawTytul(stara);
+    }
+  };
+  input.addEventListener("keydown", (ev) => {
+    ev.stopPropagation();
+    if (ev.key === "Enter") input.blur();
+    if (ev.key === "Escape") {
+      input.removeEventListener("blur", zapisz);
+      input.replaceWith(topbarTitleEl);
+      ustawTytul(stara);
+    }
+  });
+  input.addEventListener("blur", zapisz);
+};
+
+const viewerEl = document.getElementById("viewer");
+const pustyStanEl = document.getElementById("pusty-stan");
+const scene = new THREE.Scene();
+
+const camera = new THREE.PerspectiveCamera(45, 1, 0.1, 20000);
+camera.position.set(350, 280, 350);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.toneMapping = THREE.ACESFilmicToneMapping;
+viewerEl.appendChild(renderer.domElement);
+
+const pmrem = new THREE.PMREMGenerator(renderer);
+scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+
+const orbit = new OrbitControls(camera, renderer.domElement);
+orbit.enableDamping = true;
+orbit.target.set(0, 30, 0);
+orbit.update();
+
+window.__viewer = { camera, orbit, scene, robotGroup: null };
+
+const gizmo = new TransformControls(camera, renderer.domElement);
+gizmo.addEventListener("dragging-changed", (e) => { orbit.enabled = !e.value; });
+scene.add(gizmo);
+
+scene.add(new THREE.HemisphereLight(0xffffff, 0x35353c, 0.6));
+const dir1 = new THREE.DirectionalLight(0xffffff, 2.2);
+dir1.position.set(300, 450, 250);
+dir1.castShadow = true;
+dir1.shadow.mapSize.set(2048, 2048);
+dir1.shadow.camera.left = -600; dir1.shadow.camera.right = 600;
+dir1.shadow.camera.top = 600; dir1.shadow.camera.bottom = -600;
+dir1.shadow.camera.far = 2000;
+dir1.shadow.bias = -0.0005;
+scene.add(dir1);
+const dir2 = new THREE.DirectionalLight(0xffffff, 0.4);
+dir2.position.set(-1, 0.5, -1);
+scene.add(dir2);
+
+// CAD (mm, Z-w-gore) -> Three.js (Y-w-gore): cala scena w grupie obroconej
+// raz o -90 wokol X, zamiast przeliczac kazda wspolrzedna osobno.
+const robotGroup = new THREE.Group();
+robotGroup.rotation.x = -Math.PI / 2;
+scene.add(robotGroup);
+window.__viewer.robotGroup = robotGroup;
+
+let grid = new THREE.GridHelper(600, 24, cssColor("--grid1"), cssColor("--grid2"));
+scene.add(grid);
+
+const podloga = new THREE.Mesh(
+  new THREE.PlaneGeometry(2000, 2000),
+  new THREE.ShadowMaterial({ opacity: 0.35 }),
+);
+podloga.rotation.x = -Math.PI / 2;
+podloga.receiveShadow = true;
+scene.add(podloga);
+
+const loader = new STLLoader();
+const czesciMesh = {};
+let wybrana = null;       // Group|Mesh calej czesci - do gizmo (przesun/obroc)
+let wybranaBryla = null;  // konkretny klikniety sub-mesh - do panelu koloru
+
+// kolor mesh-a poza zaznaczeniem: wlasny (z plan.json) jesli ustawiony,
+// inaczej motyw (--mesh) - stara czesc bez plan.json zawsze idzie na motyw.
+function bazowyKolor(mesh) {
+  return mesh.userData.kolorWlasny ? new THREE.Color(mesh.userData.kolorWlasny) : cssColor("--mesh");
+}
+
+function applyThemeToScene() {
+  scene.background = gradientTlo(
+    getComputedStyle(document.documentElement).getPropertyValue("--bg-gora").trim(),
+    getComputedStyle(document.documentElement).getPropertyValue("--bg-dol").trim(),
+  );
+  scene.fog = new THREE.Fog(cssColor("--bg-dol"), 900, 4000);
+  scene.remove(grid);
+  grid = new THREE.GridHelper(600, 24, cssColor("--grid1"), cssColor("--grid2"));
+  scene.add(grid);
+  for (const obiekt of Object.values(czesciMesh)) {
+    obiekt.traverse((mesh) => {
+      if (mesh !== wybranaBryla && mesh.material) mesh.material.color = bazowyKolor(mesh);
+    });
+  }
+}
+
+// motyw przelacza inline'owy skrypt w <head>; tutaj tylko dociagamy scene 3D
+window.addEventListener("themechange", applyThemeToScene);
+
+function resize() {
+  const w = viewerEl.clientWidth, h = viewerEl.clientHeight;
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+}
+window.addEventListener("resize", resize);
+resize();
+sidebarRightEl.addEventListener("transitionend", resize);
+new ResizeObserver(resize).observe(viewerEl);
+
+function animate() {
+  requestAnimationFrame(animate);
+  orbit.update();
+  renderer.render(scene, camera);
+}
+animate();
+
+const kolorRowEl = document.getElementById("kolor-row");
+const kolorInputEl = document.getElementById("kolor-input");
+
+function zaznacz(obiekt, nazwa, hitObj) {
+  if (wybranaBryla && wybranaBryla.material) wybranaBryla.material.color = bazowyKolor(wybranaBryla);
+  wybrana = obiekt;
+  wybranaBryla = hitObj || null;
+  if (obiekt) {
+    if (hitObj && hitObj.material) hitObj.material.color = cssColor("--mesh-sel");
+    gizmo.attach(obiekt);
+    document.getElementById("wybrana").innerHTML = `<span class="nazwa">${nazwa}</span>`;
+  } else {
+    gizmo.detach();
+    document.getElementById("wybrana").innerHTML = `<span class="nazwa">${t("no_selection")}</span>`;
+  }
+  // panel koloru: tylko gdy klikniety mesh nalezy do czesci z plan.json
+  // (ma userData.indeks) - stare czesci bez planu nie maja jak zapisac koloru per-bryla
+  if (hitObj && hitObj.userData.indeks !== undefined) {
+    kolorRowEl.style.display = "flex";
+    kolorInputEl.value = hitObj.userData.kolorWlasny || "#9a9aa2";
+  } else {
+    kolorRowEl.style.display = "none";
+  }
+}
+
+kolorInputEl.addEventListener("input", () => {
+  if (!wybranaBryla) return;
+  wybranaBryla.material.color.set(kolorInputEl.value);
+  wybranaBryla.userData.kolorWlasny = kolorInputEl.value;
+});
+kolorInputEl.addEventListener("change", async () => {
+  if (!wybranaBryla || wybranaBryla.userData.indeks === undefined) return;
+  await authFetch(`/api/projekty/${PID}/plan/${wybranaBryla.userData.nazwa}`, {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ indeks: wybranaBryla.userData.indeks, kolor: kolorInputEl.value }),
+  });
+});
+
+const raycaster = new THREE.Raycaster();
+const pointer = new THREE.Vector2();
+let downPos = null;
+
+renderer.domElement.addEventListener("pointerdown", (e) => { downPos = [e.clientX, e.clientY]; });
+renderer.domElement.addEventListener("pointerup", (e) => {
+  if (!downPos) return;
+  const moved = Math.hypot(e.clientX - downPos[0], e.clientY - downPos[1]) > 4;
+  downPos = null;
+  if (moved || gizmo.dragging) return;
+
+  const rect = renderer.domElement.getBoundingClientRect();
+  pointer.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+  pointer.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+  raycaster.setFromCamera(pointer, camera);
+  const hity = raycaster.intersectObjects(Object.values(czesciMesh), true);
+  if (hity.length > 0) {
+    const hitObj = hity[0].object;
+    const nazwa = hitObj.userData.nazwa;
+    zaznacz(czesciMesh[nazwa], nazwa, hitObj);
+  } else {
+    zaznacz(null, null, null);
+  }
+});
+
+document.querySelectorAll(".tryb-btn").forEach((btn) => {
+  btn.onclick = () => {
+    gizmo.setMode(btn.dataset.tryb);
+    document.querySelectorAll(".tryb-btn").forEach((b) => b.classList.toggle("active", b === btn));
+  };
+});
+
+// STLLoader.load() nie umie dokleic naglowka Authorization, wiec pobieramy
+// plik sami przez authFetch i podajemy loaderowi arraybuffer.
+async function wczytajStl(url) {
+  const buf = await authFetch(url).then((r) => r.arrayBuffer());
+  const geometry = loader.parse(buf);
+  geometry.deleteAttribute("normal");
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+async function wczytajCzesc(info, bustCache) {
+  const nazwa = info.nazwa;
+  // plan.json (jesli istnieje) opisuje bryly z tej czesci osobno, z
+  // wlasnym kolorem kazda - dzieki temu np. kolo moze byc innego koloru
+  // niz nadwozie. Stare czesci (sprzed tej funkcji) go nie maja - wtedy
+  // wracamy do jednego, zlanego STL-a z pojedynczym kolorem motywu.
+  let plan = null;
+  const rPlan = await authFetch(`/api/projekty/${PID}/plan/${nazwa}`);
+  if (rPlan.ok) plan = await rPlan.json();
+
+  let obiekt;
+  if (plan && plan.bryly && plan.bryly.length > 0) {
+    obiekt = new THREE.Group();
+    for (let i = 0; i < plan.bryly.length; i++) {
+      const base = `/api/projekty/${PID}/model/${nazwa}/bryla/${i}.stl`;
+      const geometry = await wczytajStl(bustCache ? `${base}?t=${Date.now()}` : base);
+      const kolor = plan.bryly[i].kolor || null;
+      const material = new THREE.MeshStandardMaterial({
+        color: kolor ? new THREE.Color(kolor) : cssColor("--mesh"),
+        metalness: 0.25, roughness: 0.45,
+      });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.castShadow = true;
+      mesh.receiveShadow = true;
+      mesh.userData.nazwa = nazwa;
+      mesh.userData.indeks = i;
+      mesh.userData.kolorWlasny = kolor;
+      obiekt.add(mesh);
+    }
+  } else {
+    const base = `/api/projekty/${PID}/model/${nazwa}.stl`;
+    const geometry = await wczytajStl(bustCache ? `${base}?t=${Date.now()}` : base);
+    const material = new THREE.MeshStandardMaterial({ color: cssColor("--mesh"), metalness: 0.25, roughness: 0.45 });
+    obiekt = new THREE.Mesh(geometry, material);
+    obiekt.castShadow = true;
+    obiekt.receiveShadow = true;
+    obiekt.userData.nazwa = nazwa;
+    obiekt.userData.kolorWlasny = null;
+  }
+
+  obiekt.position.set(info.x, info.y, info.z);
+  if (info.rot_os === "x") obiekt.rotateX(THREE.MathUtils.degToRad(info.rot_deg));
+  czesciMesh[nazwa] = obiekt;
+  robotGroup.add(obiekt);
+  pustyStanEl.style.display = "none";
+}
+
+const ukladPoNazwie = {};
+
+async function odswiezUklad() {
+  const uklad = await authFetch(`/api/projekty/${PID}/uklad`).then(r => r.json());
+  uklad.forEach((info) => { ukladPoNazwie[info.nazwa] = info; });
+  pustyStanEl.style.display = uklad.length === 0 ? "block" : "none";
+  return uklad;
+}
+
+odswiezUklad().then((uklad) => uklad.forEach((info) => wczytajCzesc(info)));
+
+async function przeladujCzesc(nazwa) {
+  const mesh = czesciMesh[nazwa];
+  if (mesh) { robotGroup.remove(mesh); delete czesciMesh[nazwa]; }
+  if (wybrana === mesh) zaznacz(null, null, null);
+
+  let info = ukladPoNazwie[nazwa];
+  if (!info) {
+    await odswiezUklad();
+    info = ukladPoNazwie[nazwa];
+  }
+  if (info) wczytajCzesc(info, true);
+}
+
+applyThemeToScene();
+
+const messagesEl = document.getElementById("messages");
+const inputEl = document.getElementById("chat-input");
+
+function addMsg(text, cls) {
+  const div = document.createElement("div");
+  div.className = `msg ${cls}`;
+  div.textContent = text;
+  messagesEl.appendChild(div);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+}
+
+async function send() {
+  const tekst = inputEl.value.trim();
+  if (!tekst) return;
+  addMsg(tekst, "user");
+  inputEl.value = "";
+
+  // generowanie (model + wlasna ocena zrzutu) potrafi trwac kilkanascie
+  // sekund - bez tego wygladalo jakby nic sie nie dzialo, az nagle
+  // "wypluwalo" wynik. Dymek z kropkami znika jak przyjdzie prawdziwa odpowiedz.
+  const ladowanieEl = document.createElement("div");
+  ladowanieEl.className = "msg bot ladowanie";
+  ladowanieEl.innerHTML = `<span class="kropka"></span><span class="kropka"></span><span class="kropka"></span>`;
+  messagesEl.appendChild(ladowanieEl);
+  messagesEl.scrollTop = messagesEl.scrollHeight;
+
+  try {
+    const r = await authFetch(`/api/projekty/${PID}/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ tekst }),
+    });
+    const dane = await r.json();
+    ladowanieEl.remove();
+    addMsg(dane.odpowiedz, "bot");
+    if (dane.przeladuj) przeladujCzesc(dane.przeladuj);
+  } catch (e) {
+    ladowanieEl.remove();
+    addMsg(`błąd połączenia: ${e}`, "bot");
+  }
+}
+
+document.getElementById("send-btn").onclick = send;
+inputEl.addEventListener("keydown", (e) => { if (e.key === "Enter") send(); });
+
+addMsg(t("initial_bot_msg"), "bot");
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+# sekrety
+backend/.env
+
+# cache / pliki generowane w runtime
+__pycache__/
+*.pyc
+backend/static_models/
+projekty/*/_cache/
+frontend/_backup_*/
+
+# Vercel
+frontend/.vercel/

@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Holocron Engine — logowanie</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --font: 'IBM Plex Sans', system-ui, -apple-system, sans-serif;
+    --mono: 'IBM Plex Mono', ui-monospace, 'SF Mono', monospace;
+    --bg: #0b0e12; --panel: #16191e; --panel2: #1d2126; --border: #2e333a;
+    --border2: #3a4048; --text: #eef0f3; --text-dim: #8b939d; --text-mid: #cbd0d7;
+    --btn-hover: #212630; --accent: #34a1e8; --err: #ec5a4d;
+  }
+  :root[data-theme="light"] {
+    --bg: #f7f8fa; --panel: #ffffff; --panel2: #fbfcfd; --border: #e3e6ea;
+    --border2: #d7dbe1; --text: #16191f; --text-dim: #6e7681; --text-mid: #3b414b;
+    --btn-hover: #eceef1; --accent: #0b7ec4; --err: #cc3524;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; min-height: 100%; background: var(--bg); color: var(--text); font-family: var(--font); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1; }
+  #wrap { max-width: 380px; margin: 0 auto; padding: 96px 24px; }
+  h1 { font-size: 27px; font-weight: 700; letter-spacing: -0.025em; margin: 0 0 30px; text-align: center; }
+  #karta { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 24px; }
+  #taby { display: flex; gap: 4px; margin-bottom: 18px; background: var(--panel2); border-radius: 8px; padding: 3px; }
+  .tab-btn { flex: 1; background: transparent; border: none; color: var(--text-dim); padding: 9px 0; border-radius: 6px; cursor: pointer; font: 600 14px var(--font); }
+  .tab-btn.active { background: var(--panel); color: var(--text); }
+  label { display: block; font: 600 11.5px var(--mono); text-transform: uppercase; letter-spacing: 0.08em; color: var(--text-dim); margin: 14px 0 7px; }
+  input { width: 100%; background: var(--panel2); border: 1px solid var(--border2); border-radius: 8px; color: var(--text); padding: 12px 14px; font: 400 15.5px var(--font); }
+  input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 18%, transparent); }
+  #submit-btn { width: 100%; margin-top: 20px; background: var(--accent); border: none; color: #ffffff; border-radius: 8px; padding: 14px 0; cursor: pointer; font: 600 15.5px var(--font); }
+  #submit-btn:hover { opacity: 0.9; }
+  #submit-btn:disabled { opacity: 0.6; cursor: default; }
+  #komunikat { font-size: 14px; margin-top: 15px; text-align: center; }
+  #komunikat.blad { color: var(--err); }
+  #komunikat.ok { color: var(--text-mid); }
+  #top-actions { position: fixed; top: 16px; right: 16px; display: flex; gap: 8px; }
+  #theme-toggle, #lang-toggle { background: var(--panel2); border: 1px solid var(--border2); color: var(--text-mid); border-radius: 6px; padding: 7px 11px; cursor: pointer; font: 500 13px var(--font); }
+  #theme-toggle:hover, #lang-toggle:hover { background: var(--btn-hover); color: var(--text); }
+</style>
+<script>
+  // Motyw musi dzialac niezaleznie od modulow (auth.js, three.js) - gdy modul
+  // sie nie wczyta, przelacznik i tak dziala. Inline w <head> = brak mignieca.
+  (function () {
+    var zapisany = localStorage.getItem("holocron-engine-theme") || "dark";
+    document.documentElement.setAttribute("data-theme", zapisany);
+    window.__setTheme = function (theme) {
+      document.documentElement.setAttribute("data-theme", theme);
+      localStorage.setItem("holocron-engine-theme", theme);
+      window.dispatchEvent(new CustomEvent("themechange", { detail: theme }));
+    };
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest && e.target.closest("#theme-toggle");
+      if (!btn) return;
+      var current = document.documentElement.getAttribute("data-theme") || "dark";
+      window.__setTheme(current === "dark" ? "light" : "dark");
+    });
+  })();
+</script>
+</head>
+<body>
+<div id="top-actions">
+  <button id="lang-toggle" title="Language">🌐 EN</button>
+  <button id="theme-toggle" title="Przełącz motyw">☀︎/☾</button>
+</div>
+<div id="wrap">
+  <h1>Holocron Engine</h1>
+  <div id="karta">
+    <div id="taby">
+      <button class="tab-btn active" data-tryb="login" data-i18n="login_tab">Zaloguj się</button>
+      <button class="tab-btn" data-tryb="signup" data-i18n="signup_tab">Zarejestruj się</button>
+    </div>
+    <form id="form">
+      <label for="email" data-i18n="email_label">E-mail</label>
+      <input id="email" type="email" autocomplete="email" required>
+      <label for="haslo" data-i18n="password_label">Hasło</label>
+      <input id="haslo" type="password" autocomplete="current-password" required minlength="6">
+      <button id="submit-btn" type="submit" data-i18n="submit_login">Zaloguj się</button>
+    </form>
+    <div id="komunikat"></div>
+  </div>
+</div>
+
+<script type="module">
+import { zaloguj, zarejestruj, getSession } from "/static/assets/auth.js";
+import { applyLang, toggleLang, getLang, t } from "/static/assets/i18n.js";
+
+const langToggleBtn = document.getElementById("lang-toggle");
+function odswiezLangBtn() {
+  langToggleBtn.textContent = getLang() === "pl" ? "🌐 EN" : "🌐 PL";
+}
+applyLang();
+odswiezLangBtn();
+langToggleBtn.onclick = () => { toggleLang(); odswiezLangBtn(); ustawTryb(tryb); };
+
+// jesli ktos juz zalogowany trafia na /login, od razu przenies dalej
+getSession().then((s) => { if (s) window.location.href = "/projekty"; });
+
+let tryb = "login";
+const tabBtns = document.querySelectorAll(".tab-btn");
+const submitBtn = document.getElementById("submit-btn");
+const komunikatEl = document.getElementById("komunikat");
+const hasloEl = document.getElementById("haslo");
+
+function ustawTryb(nowy) {
+  tryb = nowy;
+  tabBtns.forEach((b) => b.classList.toggle("active", b.dataset.tryb === tryb));
+  submitBtn.textContent = tryb === "login" ? t("submit_login") : t("submit_signup");
+  hasloEl.autocomplete = tryb === "login" ? "current-password" : "new-password";
+  komunikatEl.textContent = "";
+  komunikatEl.className = "";
+}
+tabBtns.forEach((btn) => { btn.onclick = () => ustawTryb(btn.dataset.tryb); });
+
+document.getElementById("form").addEventListener("submit", async (e) => {
+  e.preventDefault();
+  const email = document.getElementById("email").value.trim();
+  const haslo = hasloEl.value;
+  submitBtn.disabled = true;
+  komunikatEl.textContent = "";
+  komunikatEl.className = "";
+
+  try {
+    if (tryb === "login") {
+      const { error } = await zaloguj(email, haslo);
+      if (error) throw error;
+      window.location.href = "/projekty";
+    } else {
+      const { error } = await zarejestruj(email, haslo);
+      if (error) throw error;
+      window.location.href = "/projekty";
+    }
+  } catch (err) {
+    komunikatEl.textContent = err.message || t("generic_error");
+    komunikatEl.className = "blad";
+  } finally {
+    submitBtn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,10 @@
+{
+  "rewrites": [
+    { "source": "/", "destination": "/projekty.html" },
+    { "source": "/global", "destination": "/index.html" },
+    { "source": "/login", "destination": "/login.html" },
+    { "source": "/projekty", "destination": "/projekty.html" },
+    { "source": "/projekt", "destination": "/projekt.html" },
+    { "source": "/plan", "destination": "/plan.html" }
+  ]
+}
