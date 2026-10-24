@@ -10,3 +10,9 @@ frontend/_backup_*/
 
 # Vercel
 frontend/.vercel/
+
+# lokalne logi i srodowiska
+*.log
+MUJOCO_LOG.TXT
+venv*/
+.venv/
